@@ -32,65 +32,108 @@ const database = new Database;
 const { nodeInterface, nodeField } = nodeDefinitions(
   (globalId) => {
     var { type, id } = fromGlobalId(globalId);
-    if (type === 'Bottle') {
-      return database.getBottle;
+    if (type === 'User') {
+      return database.getUser;
+    } else if (type === 'Phone') {
+      return database.getPhoneById(id);
     } else {
       return null;
     }
   },
 
   (obj) => {
-    if (obj instanceof Bottle)  {
-      return BottleType;
+    if (obj instanceof User)  {
+      return UserType;
+    } else if (obj instanceof Phone) {
+      return PhoneType;
     } else {
       return null;
     }
   }
 );
 
-/**
- * Defining types of Message and Bottle. A bottle contains messages, so we need to conect those types.
- */
-
-const MessageType = new GraphQLObjectType({
-  name: 'Message',
-  description: 'Messages inside of a bottle',
+const UserType = new GraphQLObjectType({
+  name: 'User',
   fields: () => ({
-    id: globalIdField('Message'),
-    messageId: {
-      type: GraphQLInt,
-      description: 'An ID used for database manipulation',
+    id: globalIdField('User'),
+    userId: {
+      type: new GraphQLNonNull(GraphQLString),
+      resolve: (obj) => obj.userId,
     },
-    text: {
-      type: GraphQLString,
-      description: 'Text written on the message',
-    },
-  }),
-  interfaces: [nodeInterface],
-});
-
-const BottleType = new GraphQLObjectType({
-  name: 'Bottle',
-  description: 'A bottle that contains messages inside',
-  fields: () => ({
-    id: globalIdField('Bottle'),
-
-    // This is a connection, we must specify a type for that. I'll call it as 'messageConnection'.
-    messages: {
-      type: messageConnection,
-      description: 'A couple message inside of the bottle',
+    phones: {
+      type: phoneConnection,
       args: connectionArgs,
-      resolve: (_, args) => connectionFromArray(database.getMessages(), args),
+      resolve: (_, args) => connectionFromArray(database.getPhones(), args),
     },
   }),
   interfaces: [nodeInterface],
 });
 
+const PhoneType = new GraphQLObjectType({
+  name: 'Phone',
+  fields: () => ({
+    id: globalIdField('Phone'),
+    phoneId: {
+      type: new GraphQLNonNull(GraphQLString),
+      resolve: (obj) => obj.phoneId,
+    },
+    model: {
+      type: new GraphQLNonNull(GraphQLString),
+      resolve: (obj) => obj.model,
+    },
+    image: {
+      type: GraphQLString,
+      resolve: (obj) => obj.image,
+    },
+  }),
+});
+
 /**
- * Here we are defining what messageConnection should connect to the Bottle
+ * Define a connection type to connect Phones with Users
  */
-const { connectionType: messageConnection } =
-  connectionDefinitions({ name: 'Message', nodeType: MessageType });
+const { connectionType: phoneConnection } =
+  connectionDefinitions({ name: 'Phone', nodeType: PhoneType });
+
+const AddPhoneMutation = mutationWithClientMutationId({
+  name: 'AddPhone',
+  inputFields: {
+    model: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    image: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+  },
+  outputFields: {
+    viewer: {
+      type: UserType,
+      resolve: () => database.getUser(),
+    },
+  },
+  mutateAndGetPayload: ({ model, image }) => {
+    const newPhone = database.insertPhone(model, image);
+    return newPhone;
+  },
+});
+
+const RemovePhoneMutation = mutationWithClientMutationId({
+  name: 'RemovePhone',
+  inputFields: {
+    phoneId: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+  },
+  outputFields: {
+    viewer: {
+      type: UserType,
+      resolve: () => database.getUser(),
+    },
+  },
+  mutateAndGetPayload: ({ phoneId }) => {
+    const remainingPhones = database.removePhoneById(phoneId);
+    return remainingPhones;
+  },
+});
 
 /**
  * This is the type that will be the root of our query,
@@ -100,52 +143,11 @@ const Root = new GraphQLObjectType({
   name: 'Query',
   fields: () => ({
     node: nodeField,
-    bottle: {
-      type: BottleType,
-      resolve: () => database.getBottle(),
-    },
-    message: {
-      type: MessageType,
-      args: {
-        messageId: { type: GraphQLInt },
-      },
-      resolve: (source, { ...args }) => database.getMessageById(args.messageId),
+    viewer: {
+      type: UserType,
+      resolve: () => database.getUser(),
     },
   }),
-});
-
-const InsertMessageMutation = mutationWithClientMutationId({
-  name: 'InsertMessage',
-  inputFields: {
-    message: { type: new GraphQLNonNull(GraphQLString) },
-  },
-  outputFields: {
-    bottle: {
-      type: BottleType,
-      resolve: () => database.getBottle(),
-    },
-  },
-  mutateAndGetPayload: ({ message }) => {
-    const newMessage = database.insertMessage(message);
-    return newMessage;
-  },
-});
-
-const RemoveMessageMutation = mutationWithClientMutationId({
-  name: 'RemoveMessage',
-  inputFields: {
-    messageId: { type: new GraphQLNonNull(GraphQLInt) },
-  },
-  outputFields: {
-    bottle: {
-      type: BottleType,
-      resolve: () => database.getBottle(),
-    },
-  },
-  mutateAndGetPayload: ({ messageId }) => {
-    const messages = database.removeMessageById(messageId);
-    return messages;
-  },
 });
 
 /**
@@ -155,8 +157,8 @@ const RemoveMessageMutation = mutationWithClientMutationId({
 const Mutation = new GraphQLObjectType({
   name: 'Mutation',
   fields: () => ({
-    insertMessage: InsertMessageMutation,
-    removeMessage: RemoveMessageMutation,
+    addPhone: AddPhoneMutation,
+    removePhone: RemovePhoneMutation,
   }),
 });
 

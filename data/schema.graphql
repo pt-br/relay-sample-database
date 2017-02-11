@@ -1,37 +1,17 @@
-type Bottle implements Node {
-  id: ID!
-  messages(after: String, first: Int, before: String, last: Int): MessageConnection
-}
-
-input InsertMessageInput {
-  message: String!
+input AddPhoneInput {
+  model: String!
+  image: String!
   clientMutationId: String!
 }
 
-type InsertMessagePayload {
-  bottle: Bottle
+type AddPhonePayload {
+  viewer: User
   clientMutationId: String!
-}
-
-type Message implements Node {
-  id: ID!
-  messageId: Int
-  text: String
-}
-
-type MessageConnection {
-  pageInfo: PageInfo!
-  edges: [MessageEdge]
-}
-
-type MessageEdge {
-  node: Message
-  cursor: String!
 }
 
 type Mutation {
-  insertMessage(input: InsertMessageInput!): InsertMessagePayload
-  removeMessage(input: RemoveMessageInput!): RemoveMessagePayload
+  addPhone(input: AddPhoneInput!): AddPhonePayload
+  removePhone(input: RemovePhoneInput!): RemovePhonePayload
 }
 
 interface Node {
@@ -45,18 +25,40 @@ type PageInfo {
   endCursor: String
 }
 
+type Phone {
+  id: ID!
+  phoneId: String!
+  model: String!
+  image: String
+}
+
+type PhoneConnection {
+  pageInfo: PageInfo!
+  edges: [PhoneEdge]
+}
+
+type PhoneEdge {
+  node: Phone
+  cursor: String!
+}
+
 type Query {
   node(id: ID!): Node
-  bottle: Bottle
-  message(messageId: Int): Message
+  viewer: User
 }
 
-input RemoveMessageInput {
-  messageId: Int!
+input RemovePhoneInput {
+  phoneId: String!
   clientMutationId: String!
 }
 
-type RemoveMessagePayload {
-  bottle: Bottle
+type RemovePhonePayload {
+  viewer: User
   clientMutationId: String!
+}
+
+type User implements Node {
+  id: ID!
+  userId: String!
+  phones(after: String, first: Int, before: String, last: Int): PhoneConnection
 }
