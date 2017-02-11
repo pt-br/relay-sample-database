@@ -1,0 +1,62 @@
+type Bottle implements Node {
+  id: ID!
+  messages(after: String, first: Int, before: String, last: Int): MessageConnection
+}
+
+input InsertMessageInput {
+  message: String!
+  clientMutationId: String!
+}
+
+type InsertMessagePayload {
+  bottle: Bottle
+  clientMutationId: String!
+}
+
+type Message implements Node {
+  id: ID!
+  messageId: Int
+  text: String
+}
+
+type MessageConnection {
+  pageInfo: PageInfo!
+  edges: [MessageEdge]
+}
+
+type MessageEdge {
+  node: Message
+  cursor: String!
+}
+
+type Mutation {
+  insertMessage(input: InsertMessageInput!): InsertMessagePayload
+  removeMessage(input: RemoveMessageInput!): RemoveMessagePayload
+}
+
+interface Node {
+  id: ID!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Query {
+  node(id: ID!): Node
+  bottle: Bottle
+  message(messageId: Int): Message
+}
+
+input RemoveMessageInput {
+  messageId: Int!
+  clientMutationId: String!
+}
+
+type RemoveMessagePayload {
+  bottle: Bottle
+  clientMutationId: String!
+}
