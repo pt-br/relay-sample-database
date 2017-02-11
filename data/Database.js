@@ -10,18 +10,16 @@ class Database {
     this.user = new User(userId);
 
     /**
-     * Mock some messages into our bottle
+     * Mock some phones into user
      */
     this.insertPhone('iPhone 6', 'https://goo.gl/ndJdW9');
     this.insertPhone('Galaxy S7', 'https://goo.gl/uanrHM');
-
-    // Moto X image url: https://goo.gl/690VPe
   }
 
   /**
    * This function will be called by GraphQL.
-   * It receives a text string, creates a new Message instance and insert it to
-   * our Bottle.
+   * It receives a text string, creates a new Phone instance and insert it to
+   * our User.
    */
   insertPhone(model, image) {
     const phoneId = ShortId.generate();
@@ -42,7 +40,7 @@ class Database {
 
   /**
    * This function will be called by GraphQL.
-   * It returns all messages of the Bottle.
+   * It returns all phones of the User.
    */
   getPhones() {
     const phones = this.user.getPhones();
@@ -65,7 +63,7 @@ class Database {
 
   /**
    * This function will be called by GraphQL.
-   * It returns a message by id.
+   * It returns a phone by phoneId.
    */
   getPhoneById(phoneId) {
     const phones = this.user.getPhones();
@@ -75,7 +73,7 @@ class Database {
 
   /**
    * This function will be called by GraphQL.
-   * It returns the whole Bottle.
+   * It returns the whole User.
    */
   getUser() {
     return this.user;
@@ -83,7 +81,7 @@ class Database {
 
   /**
    * This function will be called by GraphQL.
-   * It removes a message based on messageId.
+   * It removes a phone based on phoneId.
    */
   removePhoneById(phoneId) {
     this.user.removePhoneById(phoneId);
