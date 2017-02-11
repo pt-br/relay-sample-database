@@ -1,2 +1,2 @@
 # relay-sample-database
-A sample database for relay learning purposes
+A sample database for mock data purposes
