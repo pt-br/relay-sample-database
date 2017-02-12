@@ -135,6 +135,31 @@ const RemovePhoneMutation = mutationWithClientMutationId({
   },
 });
 
+const UpdatePhoneMutation = mutationWithClientMutationId({
+  name: 'UpdatePhone',
+  inputFields: {
+    phoneId: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    phoneModel: {
+      type: GraphQLString,
+    },
+    phoneImage: {
+      type: GraphQLString,
+    },
+  },
+  outputFields: {
+    viewer: {
+      type: UserType,
+      resolve: () => database.getUser(),
+    },
+  },
+  mutateAndGetPayload: ({ phoneId, phoneModel, phoneImage }) => {
+    const updatedPhones = database.updatePhone(phoneId, phoneModel, phoneImage);
+    return updatedPhones;
+  },
+});
+
 /**
  * This is the type that will be the root of our query,
  * and the entry point into our schema.
@@ -159,6 +184,7 @@ const Mutation = new GraphQLObjectType({
   fields: () => ({
     addPhone: AddPhoneMutation,
     removePhone: RemovePhoneMutation,
+    updatePhone: UpdatePhoneMutation,
   }),
 });
 
